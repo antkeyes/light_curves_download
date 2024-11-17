@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta and Title -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Search</title>
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('download_sandbox.static', filename='favicon/favicon.png') }}" type="image/png">
+    <!-- Styles -->
+    <style>
+        h1 {
+            font-family: monospace;
+        }
+        body {
+            background-color: white;
+            color: #10181F;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 50px;
+            background-color: #FCFBF9;
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            z-index: 10;
+            border-bottom: 1px solid #21262E;
+            padding: 0 20px;  
+            box-sizing: border-box;
+        }
+
+        .header h1 {
+            margin: 0; 
+        }
+
+        .logo {
+            height: 40px; 
+            max-width: 100%; 
+            margin-left: auto; 
+        }
+
+        .container {
+            margin-top: 70px;
+        }
+
+        .search-container {
+            width: 60%;
+            background-color: #FCFBF9;
+            margin: 200px auto 0 auto;
+            padding: 20px 20px 5px 20px; 
+            /* border-radius: 10px; */
+            text-align: left;
+            border: 1px solid #E1DFD9;
+        }
+
+        .search-header {
+            width: calc(100% + 20px); 
+            height: 35px;
+            background-color: #FCFBF9;
+            color: #21262E;
+            text-align: left;
+            line-height: 35px; 
+            font-size: 18px;
+            font-weight: bold;
+            font-family: monospace;
+            padding-left: 20px;
+            margin-left: -20px; 
+            margin-top: -20px;  
+            margin-bottom: 10px;  
+            border-bottom: 1px solid #E1DFD9;
+        }
+
+        .note {
+            font-size: 12px;  
+            color: #888888;   
+            margin-top: 10px; 
+            padding-left: 5px; 
+            /* position: relative; */
+            bottom: 0;
+        }
+
+        .results-container {
+            width: 60%;
+            background-color: #FCFBF9;
+            margin: 50px auto;
+            padding: 20px;
+            /* border-radius: 10px; */
+            text-align: left;
+            border: 1px solid #E1DFD9;
+        }
+
+        .results-container p {
+            color: #FCFBF9; 
+            margin-left: 20px;  
+            font-family: monospace; 
+        }
+
+        .results-files-container {
+            border-radius: 5px; 
+            overflow: hidden; 
+            border: 1px solid #E1DFD9; 
+            background-color: #2F363D;
+            padding: 0; 
+            margin-bottom: 20px;
+        }
+
+        .results-files-container ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0; 
+        }
+
+        .file-item {
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            background-color: #2F363D; 
+        }
+
+        .file-item:nth-child(even) {
+            background-color: #21262E; 
+        }
+
+        .file-item input[type="checkbox"] {
+            margin-right: 10px; 
+        }
+
+        .file-name {
+            color: #3B8DEA; 
+            font-family: monospace; 
+            cursor: pointer; 
+        }
+
+        .file-item:hover {
+            background-color: #3C4349; 
+        }
+
+        input[type="text"] {
+            width: 35%;  
+            padding: 10px;
+            border-radius: 3px;
+            border: 1px solid #E1DFD9;
+            margin-right: 10px;
+            display: inline-block;  
+            vertical-align: middle; 
+        }
+
+        .input-label {
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;  
+            color: #21262E;  
+            padding-left: 5px;  
+            font-family: monospace;
+        }
+
+        input::placeholder {
+            color: #888888;  
+            opacity: 1;  
+        }
+
+        .guide-container {
+            width: 60%;
+            background-color: #FCFBF9;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: left;
+            border: 1px solid #E1DFD9;
+        }
+
+        .guide-header {
+            width: calc(100% + 20px);
+            height: 35px;
+            background-color: #FCFBF9;
+            color: #21262E;
+            text-align: left;
+            line-height: 35px;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: monospace;
+            padding-left: 20px;
+            margin-left: -20px;
+            margin-top: -20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #E1DFD9;
+        }
+
+        /* Chart Container with Horizontal Scroll */
+        .chart-container {
+            border: 1px solid #E1DFD9;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-x: auto;  
+            white-space: nowrap;  
+            display: block;  
+            max-width: 100%;  
+            overflow-y: hidden; 
+            box-sizing: border-box;
+            background-color: #F9F4EE;
+            margin-bottom: 20px;
+        }
+
+        /* .scrollbar-container {
+            scrollbar-width: thin;
+            border: 1px
+        } */
+
+        /* Chart Row */
+        .chart-row-epdlc {
+            display: grid;
+            grid-template-columns: repeat(20, 100px);  
+            gap: 0px;
+            padding: 5px;
+            border: 1px solid #E1DFD9;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            width: max-content;  
+            box-sizing: border-box;  
+            background-color: #2F2F2F;
+        }
+
+        .chart-row-tfalc {
+            display: grid;
+            grid-template-columns: repeat(17, 100px); 
+            gap: 0px;
+            padding: 5px;
+            border: 1px solid #E1DFD9;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            width: max-content;  
+            box-sizing: border-box;  
+            background-color: #2F2F2F;
+        }
+
+        /* individual Chart Cell */
+        .chart-row-epdlc div, .chart-row-tfalc div {
+            text-align: center;
+            padding: 2px;
+            font-size: 12px;
+            overflow: hidden;  
+            color: #FCFBF9;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #666FC2;
+            color: #FCFBF9;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            border: 1px solid #21262E;
+            display: inline-block; 
+            vertical-align: middle; 
+        }
+
+        button[disabled] {
+            background-color: #F8F4EE;
+            cursor: not-allowed;
+            border: 1px solid #E1DFD9;
+            color: #888888;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 10px 0;
+        }
+
+        label {
+            cursor: pointer;
+        }
+    </style>
+    <!-- Scripts -->
+    <script>
+        let selectedDownloadLinks = [];
+
+        function handleFileSelect(downloadLink, checkboxId) {
+            const checkbox = document.getElementById(checkboxId);
+            if (checkbox.checked) {
+                selectedDownloadLinks.push(downloadLink); 
+            } else {
+                selectedDownloadLinks = selectedDownloadLinks.filter(link => link !== downloadLink);
+            }
+            document.getElementById("download-btn").disabled = selectedDownloadLinks.length === 0;
+        }
+
+        function downloadFiles() {
+            if (selectedDownloadLinks.length > 0) {
+                selectedDownloadLinks.forEach(link => {
+                    const a = document.createElement('a');
+                    a.href = link;
+                    a.download = '';  // Use the default filename
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                });
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <!-- Header Section -->
+    <div class="header">
+        <h1>Light Curve Search</h1>
+        <img src="{{ url_for('download_sandbox.static', filename='logo/princeton_logo.png') }}" alt="Princeton Logo" class="logo">
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Search Container -->
+        <div class="search-container">
+            <div class="search-header">Search HATPI</div> 
+            <form method="GET" action="{{ url_for('download_sandbox.list_files') }}">
+                <label for="search-input" class="input-label">2MASS ID</label>
+                <input type="text" id="search-input" name="search" 
+                       placeholder="e.g. 02505320p2901206" 
+                       value="{{ search_query if search_query is not none else '' }}">
+                <button type="submit">Search</button>
+            </form>
+            <p class="note">* please use 'p' & 'm' in lieu of '+' & '-' for declination</p>
+        </div>
+
+        <!-- Results Container -->
+        <div class="results-container">
+            <div class="search-header">Search Results</div>
+            <div class="results-files-container">
+                <ul>
+                    {% if search_query is not none %}
+                        {% if files %}
+                            {% for file in files %}
+                                <li class="file-item">
+                                    <input type="checkbox" name="file" id="file-{{ file.id }}" value="{{ file.id }}" onclick="handleFileSelect('{{ url_for('download_sandbox.view_file', file_id=file.id) }}', 'file-{{ file.id }}')">
+                                    <label for="file-{{ file.id }}" class="file-name">{{ file.file_name }}</label>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <p>No files found. Please try a different search.</p>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+            </div>  
+            <button id="download-btn" class="download-btn" onclick="downloadFiles()" disabled>Download Selected Files</button>
+        </div>
+
+        <!-- Data Guide Section -->
+        <div class="guide-container">
+            <div class="guide-header">Data Guide</div>
+            <p style="color: #757575; font-weight: bold; font-family: monospace; font-size: 12px; margin-left: 20px; margin-bottom: 5px; margin-top: 0px;">Sample .epdlc file</p>
+            <div class="chart-container">
+                <p style="font-weight: bold; font-family: monospace; font-size: 10px; margin-left: 30px; margin-bottom: 5px; margin-top: 0px;">Column Headers</p>
+                <div class="chart-row-epdlc">
+                    <div>Image-ID</div>
+                    <div>HJD-2400000</div>
+                    <div>Rawmag_Ap1</div>
+                    <div>Rawmag_err_Ap1</div>
+                    <div>flag_Ap1</div>
+                    <div>Rawmag_Ap2</div>
+                    <div>Rawmag_err_Ap2</div>
+                    <div>flag_Ap2</div>
+                    <div>Rawmag_Ap3</div>
+                    <div>Rawmag_err_Ap3</div>
+                    <div>flag_Ap3</div>
+                    <div>Fitmag_Ap1</div>
+                    <div>Fitmag_Ap2</div>
+                    <div>Fitmag_Ap3</div>
+                    <div>EPDmag_Ap1</div>
+                    <div>EPDmag_AP2</div>
+                    <div>EPDmag_AP3</div>
+                    <div>TFAmag_AP1</div>
+                    <div>TFAmag_AP2</div>
+                    <div>TFAmag_AP3</div>
+                </div>
+                <!-- Data Row -->
+                <div class="chart-row-epdlc">
+                    <!-- First Data Row -->
+                    <div>8-266507</div>
+                    <div>55415.0048383</div>
+                    <div>15.05372</div>
+                    <div>0.15332</div>
+                    <div>G</div>
+                    <div>14.81859</div>
+                    <div>0.16498</div>
+                    <div>G</div>
+                    <div>14.82067</div>
+                    <div>0.19831</div>
+                    <div>G</div>
+                    <div>14.731</div>
+                    <div>14.6262</div>
+                    <div>14.6825</div>
+                    <div>14.34222</div>
+                    <div>14.44106</div>
+                    <div>14.59920</div>
+                    <div>14.40722</div>
+                    <div>14.50009</div>
+                    <div>14.80977</div>
+                    <!-- Second Data Row -->
+                    <div>8-266508</div>
+                    <div>55415.0075884</div>
+                    <div>15.65856</div>
+                    <div>0.36518</div>
+                    <div>G</div>
+                    <div>14.99536</div>
+                    <div>0.26665</div>
+                    <div>G</div>
+                    <div>14.77104</div>
+                    <div>0.26111</div>
+                    <div>G</div>
+                    <div>15.2554</div>
+                    <div>14.7541</div>
+                    <div>14.5978</div>
+                    <div>14.92171</div>
+                    <div>14.63150</div>
+                    <div>14.59523</div>
+                    <div>14.85012</div>
+                    <div>14.47339</div>
+                    <div>14.22341</div>
+                    <!-- Third Data Row -->
+                    <div>8-266509</div>
+                    <div>55415.0102970</div>
+                    <div>15.32078</div>
+                    <div>0.23305</div>
+                    <div>G</div>
+                    <div>14.85149</div>
+                    <div>0.20308</div>
+                    <div>G</div>
+                    <div>14.68701</div>
+                    <div>0.20993</div>
+                    <div>G</div>
+                    <div>15.0485</div>
+                    <div>14.6732</div>
+                    <div>14.5502</div>
+                    <div>14.64260</div>
+                    <div>14.51483</div>
+                    <div>14.49668</div>
+                    <div>14.72672</div>
+                    <div>14.62438</div>
+                    <div>14.59349</div>
+                </div>
+            </div>
+
+            <p style="color: #757575; font-weight: bold; font-family: monospace; font-size: 12px; margin-left: 20px; margin-bottom: 5px; margin-top: 0px;">Sample .tfalc file</p>
+            <div class="chart-container">
+                <p style="font-weight: bold; font-family: monospace; font-size: 10px; margin-left: 30px; margin-bottom: 5px; margin-top: 0px;">Column Headers</p>
+                <div class="chart-row-tfalc">
+                    <div>Image-ID</div>
+                    <div>HJD-2400000</div>
+                    <div>Rawmag_Ap1</div>
+                    <div>Rawmag_err_Ap1</div>
+                    <div>flag_Ap1</div>
+                    <div>Rawmag_Ap2</div>
+                    <div>Rawmag_err_Ap2</div>
+                    <div>flag_Ap2</div>
+                    <div>Rawmag_Ap3</div>
+                    <div>Rawmag_err_Ap3</div>
+                    <div>flag_Ap3</div>
+                    <div>Fitmag_Ap1</div>
+                    <div>Fitmag_Ap2</div>
+                    <div>Fitmag_Ap3</div>
+                    <div>EPDmag_Ap1</div>
+                    <div>EPDmag_AP2</div>
+                    <div>EPDmag_AP3</div>
+                </div>
+                <!-- Data Rows -->
+                <div class="chart-row-tfalc">
+                    <div>5-267087</div>
+                    <div>55446.7779999</div>
+                    <div>7.96964</div>
+                    <div>0.00152</div>
+                    <div>C</div>
+                    <div>7.40285</div>
+                    <div>0.00119</div>
+                    <div>C</div>
+                    <div>7.06767</div>
+                    <div>0.00105</div>
+                    <div>C</div>
+                    <div>7.41411</div>
+                    <div>6.93766</div>
+                    <div>6.66688</div>
+                    <div>7.86307</div>
+                    <div>7.86711</div>
+                    <div>7.86962</div>
+                    <!-- Second Data Row -->
+                    <div>5-267088</div>
+                    <div>55446.7820581</div>
+                    <div>8.05090</div>
+                    <div>0.00153</div>
+                    <div>C</div>
+                    <div>7.48285</div>
+                    <div>0.00120</div>
+                    <div>C</div>
+                    <div>7.14823</div>
+                    <div>0.00105</div>
+                    <div>C</div>
+                    <div>7.57954</div>
+                    <div>7.07972</div>
+                    <div>6.79101</div>
+                    <div>7.92170</div>
+                    <div>7.92939</div>
+                    <div>7.93271</div>
+                    <!-- Third Data Row -->
+                    <div>5-267089</div>
+                    <div>55446.7860636</div>
+                    <div>8.05865</div>
+                    <div>0.00163</div>
+                    <div>C</div>
+                    <div>7.47970</div>
+                    <div>0.00128</div>
+                    <div>C</div>
+                    <div>7.13475</div>
+                    <div>0.00111</div>
+                    <div>C</div>
+                    <div>7.57149</div>
+                    <div>7.06601</div>
+                    <div>6.77281</div>
+                    <div>7.94828</div>
+                    <div>7.94560</div>
+                    <div>7.94190</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
